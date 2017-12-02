@@ -76,10 +76,10 @@ class Bot:
                         finished.sort()
 
                         s = "{} just completed **Day {}**"
-                        s = s.format(new["name"], pretty_join(finished))
+                        s = s.format(new["name"], Bot.pretty_join(finished))
 
                         if started:
-                            s += " and started on **Day {}**".format(pretty_join(started))
+                            s += " and started on **Day {}**".format(Bot.pretty_join(started))
 
                         if len(finished) + len(started) >= 2:
                             s += ". {}!".format(random.choice(["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]))
