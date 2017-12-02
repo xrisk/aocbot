@@ -75,11 +75,11 @@ class Bot:
                         started.sort()
                         finished.sort()
 
-                        s = "{} just completed Day {}"
-                        s = s.format(new["name"], ", ".join(finished))
+                        s = "{} just completed **Day {}**"
+                        s = s.format(new["name"], pretty_join(finished))
 
                         if started:
-                            s += " and started on Day {}".format(", ".join(started))
+                            s += " and started on **Day {}**".format(pretty_join(started))
 
                         if len(finished) + len(started) >= 2:
                             s += ". {}!".format(random.choice(["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]))
@@ -106,6 +106,11 @@ class Bot:
         for i, j in enumerate(ret):
             lines.append("{}. {} ({} points)".format(i + 1, j[0], j[1]))
         return "\n".join(lines)
+
+    def pretty_join(list):
+        if len(list) <= 1:
+            return "".join(list);
+        return "{} and {}".format(", ".join(list[0:-1]), list[-1])
 
     async def on_message(self, message):
         if message.content.startswith('%leaderboard'):
