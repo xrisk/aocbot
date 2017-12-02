@@ -1,9 +1,9 @@
 version: "3"
 services:
   discordbot:
-    image: aocbot
+    image: xrisk/aocbot:stable
     restart: always
-  mongo:
+  mongodb:
     image: mongo
 
 

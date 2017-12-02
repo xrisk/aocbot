@@ -27,7 +27,7 @@ class Bot:
         self.client.event(self.on_ready)
         self.client.event(self.on_message)
 
-        self.db = pymongo.MongoClient().aoc
+        self.db = pymongo.MongoClient('mongodb').aoc
 
     async def on_ready(self):
         logging.info('Logged in as {}'.format(self.client.user.name))
