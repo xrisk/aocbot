@@ -109,8 +109,8 @@ class Bot:
 
     def pretty_join(list):
         if len(list) <= 1:
-            return "".join(list);
-        return "{} and {}".format(", ".join(list[0:-1]), list[-1])
+            return "".join(list)
+        return "{} and {}".format(", ".join(list[:-1]), list[-1])
 
     async def on_message(self, message):
         if message.content.startswith('%leaderboard'):
