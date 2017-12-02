@@ -1,0 +1,9 @@
+version: "3"
+services:
+  discordbot:
+    image: aocbot
+    restart: always
+  mongo:
+    image: mongo
+
+

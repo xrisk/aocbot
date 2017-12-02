@@ -1,0 +1,4 @@
+pymongo
+discord.py
+arrow
+requests
