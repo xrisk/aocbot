@@ -148,6 +148,7 @@ class Bot:
             await self.client.send_message(message.channel,
                                            self.db.memberlist.find())
         elif message.content.startswith('%refresh'):
+            logging.info("attempting to manually refresh")
             await self.fetch_leaderboard(onetime=True)
 
     def run(self):
