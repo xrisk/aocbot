@@ -35,14 +35,15 @@ class Bot:
         logging.info('Logged in as {}'.format(self.client.user.name))
         self.client.loop.create_task(self.fetch_leaderboard())
 
-    async def fetch_leaderboard(self):
-        while not self.client.is_closed:
+    async def fetch_leaderboard(self, onetime=False):
+        while not (self.client.is_closed or onetime):
             r = requests.get(Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
                              cookies={'session': Bot.SESS_KEY})
 
             logging.info("Fetched from API: {}".format(r.text))
             await self.update_store(r.json())
-            await asyncio.sleep(600)
+            if not onetime:
+                await asyncio.sleep(600)
 
     async def update_store(self, json):
         try:
@@ -134,6 +135,8 @@ class Bot:
         elif message.content.startswith('%store'):
             await self.client.send_message(message.channel,
                                            self.db.memberlist.find())
+        elif message.content.startswith('%refresh'):
+            await self.fetch_leaderboard(onetime=True)
 
     def run(self):
         self.client.run(Bot.SECRET)
