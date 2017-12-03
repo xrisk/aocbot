@@ -66,7 +66,7 @@ class Bot:
 
                     if cur_ts > db_ts:
                         finished, started = [], []
-                        logging.info("updating store for ({}, {})",format(new["id"], new["name"]))
+                        logging.info("updating store for ({}, {})".format(new["id"], new["name"]))
                         self.db.memberlist_replace_one({"_id": old["_id"]}, new)
                         for day in new["completion_day_level"]:
                             if not old or day not in old["completion_day_level"]:
