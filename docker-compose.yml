@@ -4,6 +4,8 @@ services:
     build: .
     restart: always
     image: xrisk/aocbot:stable
+    depends_on:
+        - mongodb
   mongodb:
     image: mongo
 
