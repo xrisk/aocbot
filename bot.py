@@ -49,6 +49,7 @@ class Bot:
             logging.info("attempting to update store")
             logging.info("len old store: {}".format(self.db.memberlist.find().count()))
             logging.info("len update: {}".format(len(json["members"])))
+            joins = []
             lines = []
             for m in json["members"]:
                 new = json["members"][m]
@@ -56,7 +57,7 @@ class Bot:
 
                 if not old:
                     greet = "{} just joined. Welcome!".format(new["name"])
-                    lines.append(greet)
+                    joins.append(greet)
                     self.db.memberlist.insert_one(new)
                     logging.info("adding ({}, {}) to store".format(
                                  new["id"], new["name"]))
@@ -67,7 +68,7 @@ class Bot:
                     if cur_ts > db_ts:
                         finished, started = [], []
                         logging.info("updating store for ({}, {})".format(new["id"], new["name"]))
-                        self.db.memberlist_replace_one({"_id": old["_id"]}, new)
+                        self.db.memberlist.replace_one({"_id": old["_id"]}, new)
                         for day in new["completion_day_level"]:
                             if not old or day not in old["completion_day_level"]:
                                 t = new["completion_day_level"][day]
@@ -83,7 +84,10 @@ class Bot:
                         s = s.format(new["name"], Bot.pretty_join(finished))
 
                         if started:
-                            s += " and started on **Day {}**".format(Bot.pretty_join(started))
+                            if len(finished) == 0:
+                                s = "{} just started on **Day {}**".format(new["name"], Bot.pretty_join(started))
+                            else:
+                                s += " and started on **Day {}**".format(Bot.pretty_join(started))
 
                         if len(finished) + len(started) >= 2:
                             s += ". {}!".format(random.choice(["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]))
@@ -92,6 +96,9 @@ class Bot:
                        
                         lines.append(s)
             
+            if joins:
+                await self.client.send_message(self.client.get_channel(Bot.CHAN_ID),
+                                              "\n".join(joins))
             if lines:
                 await self.client.send_message(self.client.get_channel(Bot.CHAN_ID),
                                                "\n".join(lines))
