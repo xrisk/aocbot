@@ -36,18 +36,30 @@ class Bot:
             r = requests.get(Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
                              cookies={'session': Bot.SESS_KEY})
 
-            logging.info("Fetched from API: {}".format(r.text))
-            await self.update_store(r.json())
-            if not onetime:
-                await asyncio.sleep(600)
+            if r.status_code != requests.codes.ok:
+                err = "API fetch failed - bad status code in HTTP response {}"
+                err = err.format(r.status_code)
+                logging.critical(err)
+                self.client.send_message(self.channel, err)
             else:
+                try:
+                    resp_as_json = r.json()
+                    logging.info("API fetch as JSON successful")
+                except ValueError:
+                    err = "API fetch failed - Invalid JSON response"
+                    logging.critical(err)
+                    self.client.send_message(self.channel, err)
+
+                await self.update_store(resp_as_json)
+
+            if onetime:
                 break
+            else:
+                await asyncio.sleep(600)
 
     async def update_store(self, json):
         try:
             logging.info("attempting to update store")
-            logging.info("len old store: {}".format(self.db.memberlist.find().count()))
-            logging.info("len update: {}".format(len(json["members"])))
             joins = []
             lines = []
             for m in json["members"]:
