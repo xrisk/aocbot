@@ -6,6 +6,7 @@ import asyncio
 import pymongo
 import random
 
+
 class Bot:
 
     SESS_KEY = "53616c7465645f5f698119e83582912bf3a97a7dcb22f7589d69223e54d765825bbd106e2e337a3993bd6484f5314a6b"
@@ -21,6 +22,7 @@ class Bot:
     debug = True
 
     def __init__(self):
+
         self.store = {}
         self.client = discord.Client()
 
@@ -34,17 +36,19 @@ class Bot:
         self.client.loop.create_task(self.fetch_leaderboard())
 
     async def fetch_leaderboard(self):
-        r = requests.get(Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
-                         cookies={'session': Bot.SESS_KEY})
+        while not self.client.is_closed:
+            r = requests.get(Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
+                             cookies={'session': Bot.SESS_KEY})
 
-        logging.info("Fetched from API: {}".format(r.text))
-        await self.update_store(r.json())
-        await asyncio.sleep(600)
+            logging.info("Fetched from API: {}".format(r.text))
+            await self.update_store(r.json())
+            await asyncio.sleep(600)
 
     async def update_store(self, json):
         try:
             logging.info("attempting to update store")
-            logging.info("old store: {}".format(self.db.memberlist.find()))
+            logging.info("len old store: {}".format(self.db.memberlist.find().count()))
+            logging.info("len update: {}".format(len(json["members"])))
             lines = []
             for m in json["members"]:
                 new = json["members"][m]
