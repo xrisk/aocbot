@@ -20,11 +20,7 @@ class Bot:
 
     LEADERBOARD_ID = "55305"
 
-    debug = True
-
     def __init__(self):
-
-        self.store = {}
         self.client = discord.Client()
 
         self.client.event(self.on_ready)
