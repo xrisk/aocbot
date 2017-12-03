@@ -3,6 +3,7 @@ services:
   discordbot:
     build: .
     restart: always
+    image: xrisk/aocbot:stable
   mongodb:
     image: mongo
 
