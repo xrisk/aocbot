@@ -36,7 +36,7 @@ class Bot:
         self.client.loop.create_task(self.fetch_leaderboard())
 
     async def fetch_leaderboard(self, onetime=False):
-        while not (self.client.is_closed or onetime):
+        while not self.client.is_closed:
             r = requests.get(Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
                              cookies={'session': Bot.SESS_KEY})
 
@@ -44,6 +44,8 @@ class Bot:
             await self.update_store(r.json())
             if not onetime:
                 await asyncio.sleep(600)
+            else:
+                break
 
     async def update_store(self, json):
         try:
