@@ -22,14 +22,13 @@ class Bot:
 
     def __init__(self):
         self.client = discord.Client()
-
         self.client.event(self.on_ready)
         self.client.event(self.on_message)
-
         self.db = pymongo.MongoClient('mongodb').aoc
 
     async def on_ready(self):
         logging.info('Logged in as {}'.format(self.client.user.name))
+        self.channel = self.client.get_channel(Bot.CHAN_ID)
         self.client.loop.create_task(self.fetch_leaderboard())
 
     async def fetch_leaderboard(self, onetime=False):
