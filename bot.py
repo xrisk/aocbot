@@ -70,11 +70,13 @@ class Bot:
                         logging.info("updating store for ({}, {})".format(new["id"], new["name"]))
                         self.db.memberlist.replace_one({"_id": old["_id"]}, new)
                         for day in new["completion_day_level"]:
-                            if not old or day not in old["completion_day_level"]:
-                                t = new["completion_day_level"][day]
-                                if "1" in t and "2" in t:
+                            old_cnt = len(old["completion_day_level"].get(day, {}))
+                            new_cnt = len(new["completion_day_level"][day])
+
+                            if new_cnt > old_cnt:
+                                if new_cnt == 2 and old_cnt != 2:
                                     finished.append(day)
-                                else:
+                                elif new_cnt == 1 and old_cnt == 0:
                                     started.append(day)
 
                         started.sort()
