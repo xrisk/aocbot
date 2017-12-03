@@ -9,7 +9,8 @@ import random
 
 class Bot:
 
-    SESS_KEY = "53616c7465645f5f698119e83582912bf3a97a7dcb22f7589d69223e54d765825bbd106e2e337a3993bd6484f5314a6b"
+    SESS_KEY = "53616c7465645f5f698119e83582912bf3a97a7dcb22f7589d69223e54d76"\
+               "5825bbd106e2e337a3993bd6484f5314a6b"
 
     REQ_URL = "http://adventofcode.com/2017/leaderboard/private/view/{}.json"
 
@@ -70,7 +71,8 @@ class Bot:
 
                     if cur_ts > db_ts:
                         finished, started = [], []
-                        logging.info("updating store for ({}, {})".format(new["id"], new["name"]))
+                        logging.info("updating store for ({}, {})".format(
+                                     new["id"], new["name"]))
                         self.db.memberlist.replace_one({"_id": old["_id"]}, new)
                         for day in new["completion_day_level"]:
                             old_cnt = len(old["completion_day_level"].get(day, {}))
@@ -90,23 +92,24 @@ class Bot:
 
                         if started:
                             if len(finished) == 0:
-                                s = "{} just started on **Day {}**".format(new["name"], Bot.pretty_join(started))
+                                s = "{} just started on **Day {}**".format(
+                                    new["name"], Bot.pretty_join(started))
                             else:
-                                s += " and started on **Day {}**".format(Bot.pretty_join(started))
+                                s += " and started on **Day {}**".format(
+                                     Bot.pretty_join(started))
 
                         if len(finished) + len(started) >= 2:
-                            s += ". {}!".format(random.choice(["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]))
+                            s += ". {}!".format(random.choice(
+                                 ["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]))
                         else:
                             s += "."
-                       
+
                         lines.append(s)
-            
+
             if joins:
-                await self.client.send_message(self.client.get_channel(Bot.CHAN_ID),
-                                              "\n".join(joins))
+                await self.client.send_message(self.channel, "\n".join(joins))
             if lines:
-                await self.client.send_message(self.client.get_channel(Bot.CHAN_ID),
-                                               "\n".join(lines))
+                await self.client.send_message(self.channel, "\n".join(lines))
 
             logging.info("Done updating store")
         except KeyError as e:
