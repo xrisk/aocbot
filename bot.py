@@ -216,7 +216,7 @@ class Bot:
             logging.info("attempting to manually refresh")
             await self.fetch_leaderboard(onetime=True)
         elif message.content.startswith('%timetill'):
-            await self.client.send_message(self.time_till())
+            await self.client.send_message(message.channel, self.time_till())
 
     def run(self):
         self.client.run(Bot.SECRET)
