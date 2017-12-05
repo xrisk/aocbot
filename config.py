@@ -1,0 +1,4 @@
+SESS_KEY = ""
+SECRET = ""
+CHAN_ID = ""
+LEADERBOARD_ID = ""

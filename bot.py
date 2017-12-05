@@ -5,20 +5,16 @@ import logging
 import asyncio
 import pymongo
 import random
+import config
 
 
 class Bot:
 
-    SESS_KEY = "53616c7465645f5f698119e83582912bf3a97a7dcb22f7589d69223e54d76"\
-               "5825bbd106e2e337a3993bd6484f5314a6b"
-
+    SESS_KEY = config.SESS_KEY
+    SECRET = config.SECRET
+    CHAN_ID = config.CHAN_ID
+    LEADERBOARD_ID = config.LEADERBOARD_ID
     REQ_URL = "http://adventofcode.com/2017/leaderboard/private/view/{}.json"
-
-    SECRET = "Mzg1ODg5Mzk1NDU2MjEyOTk1.DQRznQ.2FVLPZF6YhhP6AL8bti6BGFLgHc"
-
-    CHAN_ID = "385778069098463232"
-
-    LEADERBOARD_ID = "55305"
 
     def __init__(self):
         self.client = discord.Client()
