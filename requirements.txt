@@ -2,3 +2,5 @@ pymongo
 discord.py
 arrow
 requests
+bs4
+lxml
