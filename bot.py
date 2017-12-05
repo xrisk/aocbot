@@ -38,7 +38,7 @@ class Bot:
                 today = arrow.utcnow()
                 last_date = today.day
                 if today.hour < 5:
-                    last_date = today - 1
+                    last_date -= 1
             logging.info("found last watched date as {}".format(last_date))
             if last_date == 25:
                 return # AOC is over ^_^
