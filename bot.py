@@ -6,6 +6,7 @@ import asyncio
 import pymongo
 import random
 import config
+import bs4
 
 
 class Bot:
@@ -21,11 +22,68 @@ class Bot:
         self.client.event(self.on_ready)
         self.client.event(self.on_message)
         self.db = pymongo.MongoClient('mongodb').aoc
+        self.last_date = None
 
     async def on_ready(self):
         logging.info('Logged in as {}'.format(self.client.user.name))
         self.channel = self.client.get_channel(Bot.CHAN_ID)
         self.client.loop.create_task(self.fetch_leaderboard())
+
+    async def watch_for_start(self):
+        logging.info("now watching for day start events")
+        while True:
+            last_date = self.last_date
+            if not last_date:
+                today = arrow.utcnow()
+                last_date = today.day
+                if today.hour < 5:
+                    last_date = today - 1
+            logging.info("found last watched date as {}".format(last_date))
+            if last_date == 25:
+                return # AOC is over ^_^
+
+            next_start = arrow.Arrow(last_date.year, last_date.month, last_date + 1, hour=5)
+            logging.info("next start time computed as {}".format(next_start))
+
+            while True:
+                cur_date = arrow.utcnow()
+                time_del = (next_start - cur_date).seconds
+                logging.info("time till next day start is {}".format(time_del))
+                if time_del < 0:
+                    self.client.send_message(self.channel, "Day {} has started!".format(next_start.day))
+                    logging.info("day {} has started!".format(next_start.day))
+                    self.last_date = next_start.day
+                    await self.watch_leaderboard(self.last_date)
+                else:
+                    logging.info("sleeping till next day start")
+                    if time_del <= 10:
+                        asyncio.sleep(1)
+                    else:
+                        asyncio.sleep(time_del - 10)
+
+
+
+    async def watch_leaderboard(self, day):
+        while True:
+            r = requests.get('http://adventofcode.com/2017/leaderboard/day/{}'.format(day))
+            soup = bs4.BeautifulSoup(r.text)
+            p = soup.find_all('p')
+            cnt = 0
+            for tag in p[2].next_siblings:
+                if tag.name == "p":
+                    break
+                elif tag.name == "div":
+                    cnt += 1
+
+            if cnt >= 100:
+                await self.client.send_message("Top 100 for Day {} filled. Stopping live updates.".format(day))
+                break
+            else:
+                await self.client.send_message("Day {}: {} users finished.".format(day, cnt))
+                asyncio.sleep(30)
+
+
+
 
     async def fetch_leaderboard(self, onetime=False):
         while not self.client.is_closed:
