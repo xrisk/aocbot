@@ -28,6 +28,7 @@ class Bot:
         logging.info('Logged in as {}'.format(self.client.user.name))
         self.channel = self.client.get_channel(Bot.CHAN_ID)
         self.client.loop.create_task(self.fetch_leaderboard())
+        self.client.loop.create_task(self.watch_for_start())
 
     async def watch_for_start(self):
         logging.info("now watching for day start events")
