@@ -34,8 +34,8 @@ class Bot:
         logging.info("now watching for day start events")
         while True:
             last_date = self.last_date
+            today = arrow.utcnow()
             if not last_date:
-                today = arrow.utcnow()
                 last_date = today.day
                 if today.hour < 5:
                     last_date -= 1
@@ -43,7 +43,7 @@ class Bot:
             if last_date == 25:
                 return # AOC is over ^_^
 
-            next_start = arrow.Arrow(last_date.year, last_date.month, last_date + 1, hour=5)
+            next_start = arrow.Arrow(today.year, today.month, last_date + 1, hour=5)
             logging.info("next start time computed as {}".format(next_start))
 
             while True:
