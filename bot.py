@@ -88,7 +88,7 @@ class Bot:
         return "{} => {:02d}:{:02d}:{:02d}".format(nxt.humanize(), hour, m, sec)
 
     async def watch_leaderboard(self, day):
-        logging.info("watching leaderboard for day {}".format(
+        logging.info("watching leaderboard for day {}".format(day))
         while True:
             url = 'http://adventofcode.com/2017/leaderboard/day/{}'
             r = requests.get(url.format(day))
