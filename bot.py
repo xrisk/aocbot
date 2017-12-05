@@ -40,30 +40,41 @@ class Bot:
 
     async def watch_for_start(self):
         logging.info("now watching for day start events")
-        today = arrow.utcnow()
-
-        next_start = arrow.Arrow(today.year, today.month,
-                                 self.last_date + 1,  hour=5)
-
-        logging.info("next start time computed as {}".format(next_start))
 
         while True:
-            cur_date = arrow.utcnow()
-            if cur_date >= next_start:
-                msg = "Day {} has started!".format(next_start.day)
-                await self.client.send_message(self.channel, msg)
-                logging.info("day {} has started!".format(next_start.day))
-                self.last_date = next_start.day
-                await self.watch_leaderboard(self.last_date)
-            else:
-                time_del = (next_start - cur_date).seconds
-                logging.info("time till next day start is {}".
-                             format(time_del))
-                logging.info("sleeping till next day start")
-                if time_del <= 10:
-                    await asyncio.sleep(1)
+
+            if self.last_date == 25:
+                # AOC is over, stop watching
+                break
+
+            today = arrow.utcnow()
+
+            next_start = arrow.Arrow(today.year, today.month,
+                                     self.last_date + 1,  hour=5)
+
+            logging.info("next start time computed as {}".format(next_start))
+
+            while True:
+                cur_date = arrow.utcnow()
+                if cur_date >= next_start:
+                    msg = "Day {} has started!".format(next_start.day)
+                    await self.client.send_message(self.channel, msg)
+                    logging.info("day {} has started!".format(next_start.day))
+                    logging.info("setting last_date to {}".format(next_start.day))
+                    self.last_date = next_start.day
+                    await self.watch_leaderboard(self.last_date)
+                    break
                 else:
-                    await asyncio.sleep(time_del - 10)
+                    time_del = (next_start - cur_date).seconds
+                    logging.info("time till next day start is {}".
+                                 format(time_del))
+                    logging.info("sleeping till next day start")
+                    if time_del <= 10:
+                        logging.info("sleeping for 1s")
+                        await asyncio.sleep(1)
+                    else:
+                        logging.info("sleeping for {} s".format(time_del - 10))
+                        await asyncio.sleep(time_del - 10)
 
     def time_till(self):
         if self.last_date == 25:
@@ -77,9 +88,18 @@ class Bot:
         return "{} => {:02d}:{:02d}:{:02d}".format(nxt.humanize(), hour, m, sec)
 
     async def watch_leaderboard(self, day):
+        logging.info("watching leaderboard for day {}".format(
         while True:
             url = 'http://adventofcode.com/2017/leaderboard/day/{}'
             r = requests.get(url.format(day))
+
+            if r.status_code == 404:
+                err = "failed to fetch global leaderboard - day {}".format(day)
+                logging.error(err)
+                logging.info("sleeping 30s till available")
+                asyncio.sleep(30)
+                continue
+
             soup = bs4.BeautifulSoup(r.text, "lxml")
             p = soup.find_all('p')
             cnt = 0
@@ -97,7 +117,7 @@ class Bot:
             else:
                 msg = "Day {}: {} users finished.".format(day, cnt)
                 await self.client.send_message(self.channel, msg)
-                await asyncio.sleep(30)
+                await asyncio.sleep(10)
 
     async def fetch_leaderboard(self, onetime=False):
         while not self.client.is_closed:
