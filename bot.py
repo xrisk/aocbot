@@ -27,51 +27,54 @@ class Bot:
     async def on_ready(self):
         logging.info('Logged in as {}'.format(self.client.user.name))
         self.channel = self.client.get_channel(Bot.CHAN_ID)
+        self.set_last_date()
         self.client.loop.create_task(self.fetch_leaderboard())
         self.client.loop.create_task(self.watch_for_start())
+
+    def set_last_date(self):
+        today = arrow.utcnow()
+        last_date = today.day
+        if today.hour < 5:
+            last_date -= 1
+        self.last_date = last_date
 
     async def watch_for_start(self):
         logging.info("now watching for day start events")
         today = arrow.utcnow()
+
+        next_start = arrow.Arrow(today.year, today.month,
+                                 self.last_date + 1,  hour=5)
+
+        logging.info("next start time computed as {}".format(next_start))
+
         while True:
-            last_date = self.last_date
-            if not last_date:
-                last_date = today.day
-                if today.hour < 5:
-                    last_date -= 1
-            logging.info("found last watched date as {}".format(last_date))
-            if last_date == 25:
-                # AOC is over
-                return
-
-            next_start = arrow.Arrow(today.year, today.month, last_date + 1,
-                                     hour=5)
-            logging.info("next start time computed as {}".format(next_start))
-
-            while True:
-                cur_date = arrow.utcnow()
-                if cur_date >= next_start:
-                    msg = "Day {} has started!".format(next_start.day)
-                    await self.client.send_message(self.channel, msg)
-                    logging.info("day {} has started!".format(next_start.day))
-                    self.last_date = next_start.day
-                    await self.watch_leaderboard(self.last_date)
+            cur_date = arrow.utcnow()
+            if cur_date >= next_start:
+                msg = "Day {} has started!".format(next_start.day)
+                await self.client.send_message(self.channel, msg)
+                logging.info("day {} has started!".format(next_start.day))
+                self.last_date = next_start.day
+                await self.watch_leaderboard(self.last_date)
+            else:
+                time_del = (next_start - cur_date).seconds
+                logging.info("time till next day start is {}".
+                             format(time_del))
+                logging.info("sleeping till next day start")
+                if time_del <= 10:
+                    await asyncio.sleep(1)
                 else:
-                    time_del = (next_start - cur_date).seconds
-                    logging.info("time till next day start is {}".
-                                 format(time_del))
-                    logging.info("sleeping till next day start")
-                    if time_del <= 10:
-                        await asyncio.sleep(1)
-                    else:
-                        await asyncio.sleep(time_del - 10)
+                    await asyncio.sleep(time_del - 10)
 
     def time_till(self):
         if self.last_date == 25:
             return "AOC is over! Merry Christmas! ^_^"
         today = arrow.utcnow()
         nxt = arrow.Arrow(today.year, today.month, self.last_date + 1, hour=5)
-        return nxt.humanize()
+        diff = (nxt - today).seconds
+        hour = diff // 3600
+        m = (diff % 3600) // 60
+        sec = diff % 60
+        return "{} => {:02d}:{:02d}:{:02d}".format(nxt.humanize(), hour, m, sec)
 
     async def watch_leaderboard(self, day):
         while True:
