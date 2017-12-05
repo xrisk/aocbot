@@ -58,9 +58,9 @@ class Bot:
                 else:
                     logging.info("sleeping till next day start")
                     if time_del <= 10:
-                        asyncio.sleep(1)
+                        await asyncio.sleep(1)
                     else:
-                        asyncio.sleep(time_del - 10)
+                        await asyncio.sleep(time_del - 10)
 
 
 
@@ -81,7 +81,7 @@ class Bot:
                 break
             else:
                 await self.client.send_message("Day {}: {} users finished.".format(day, cnt))
-                asyncio.sleep(30)
+                await syncio.sleep(30)
 
 
 
