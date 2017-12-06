@@ -94,6 +94,7 @@ class Bot:
 
     async def watch_leaderboard(self, day):
         logging.info("watching leaderboard for day {}".format(day))
+        message = None
         while True:
             url = 'http://adventofcode.com/2017/leaderboard/day/{}'
             r = requests.get(url.format(day))
@@ -120,8 +121,11 @@ class Bot:
                 await self.client.send_message(self.channel, msg.format(day))
                 break
             else:
-                msg = "Day {}: {} users finished.".format(day, cnt)
-                await self.client.send_message(self.channel, msg)
+                s = "Day {}: {} users finished.".format(day, cnt)
+                if not message:
+                    message = await self.client.send_message(self.channel, s)
+                else:
+                    await self.client.edit_message(message, s)
                 await asyncio.sleep(10)
 
     async def fetch_leaderboard(self, onetime=False):
