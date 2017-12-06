@@ -16,6 +16,7 @@ class Bot:
     CHAN_ID = config.CHAN_ID
     LEADERBOARD_ID = config.LEADERBOARD_ID
     REQ_URL = "http://adventofcode.com/2017/leaderboard/private/view/{}.json"
+    PREFIX = config.PREFIX
 
     def __init__(self):
         self.client = discord.Client()
@@ -227,19 +228,21 @@ class Bot:
         return "{} and {}".format(", ".join(list[:-1]), list[-1])
 
     async def on_message(self, message):
-        if message.content.startswith('%leaderboard'):
-            await self.client.send_message(message.channel,
-                                           self.generate_leaderboard())
-        elif message.content.startswith('%ping'):
-            await self.client.send_message(message.channel, "Pong!")
-        elif message.content.startswith('%store'):
-            await self.client.send_message(message.channel,
-                                           self.db.memberlist.find())
-        elif message.content.startswith('%refresh'):
-            logging.info("attempting to manually refresh")
-            await self.fetch_leaderboard(onetime=True)
-        elif message.content.startswith('%timetill'):
-            await self.client.send_message(message.channel, self.time_till())
+        if message.content[0] == Bot.PREFIX:
+            content = message.content[1:]
+            if content.startswith('leaderboard'):
+                await self.client.send_message(message.channel,
+                                               self.generate_leaderboard())
+            elif content.startswith('ping'):
+                await self.client.send_message(message.channel, "Pong!")
+            elif content.startswith('store'):
+                await self.client.send_message(message.channel,
+                                               self.db.memberlist.find())
+            elif content.startswith('refresh'):
+                logging.info("attempting to manually refresh")
+                await self.fetch_leaderboard(onetime=True)
+            elif content.startswith('timetill'):
+                await self.client.send_message(message.channel, self.time_till())
 
     def run(self):
         self.client.run(Bot.SECRET)
