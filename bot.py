@@ -27,6 +27,10 @@ class Bot:
 
     async def on_ready(self):
         logging.info('Logged in as {}'.format(self.client.user.name))
+
+        game = discord.Game(game="https://github.com/xrisk/aocbot")
+        await self.client.change_presence(game=game)
+
         self.channel = self.client.get_channel(Bot.CHAN_ID)
         self.set_last_date()
         self.client.loop.create_task(self.fetch_leaderboard())
