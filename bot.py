@@ -108,6 +108,11 @@ class Bot:
 
             soup = bs4.BeautifulSoup(r.text, "lxml")
             p = soup.find_all('p')
+            if len(p) < 3:
+                logging.info("seems like the leaderboard is empty")
+                logging.info("sleeping 10s")
+                await aysncio.sleep(10)
+                continue
             cnt = 0
             for tag in p[2].next_siblings:
                 if tag.name == "p":
