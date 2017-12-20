@@ -241,7 +241,7 @@ class Bot:
         return "{} and {}".format(", ".join(list[:-1]), list[-1])
 
     async def on_message(self, message):
-        if message.content[0] == Bot.PREFIX:
+        if len(message.content) > 0 and message.content[0] == Bot.PREFIX:
             content = message.content[1:]
             if content.startswith('leaderboard'):
                 await self.client.send_message(message.channel,
