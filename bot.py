@@ -34,7 +34,6 @@ class Bot:
         self.channel = self.client.get_channel(Bot.CHAN_ID)
         self.set_last_date()
         self.client.loop.create_task(self.fetch_leaderboard())
-        self.client.loop.create_task(self.watch_for_start())
 
     def set_last_date(self):
         today = arrow.utcnow()
@@ -259,6 +258,7 @@ class Bot:
 
     def run(self):
         self.client.run(Bot.SECRET)
+        self.client.loop.create_task(self.watch_for_start())
 
 
 if __name__ == '__main__':
