@@ -24,6 +24,7 @@ class Bot:
         self.client.event(self.on_message)
         self.db = pymongo.MongoClient('mongodb').aoc
         self.last_date = None
+        self.watching = False
 
     async def on_ready(self):
         logging.info('Logged in as {}'.format(self.client.user.name))
@@ -34,6 +35,8 @@ class Bot:
         self.channel = self.client.get_channel(Bot.CHAN_ID)
         self.set_last_date()
         self.client.loop.create_task(self.fetch_leaderboard())
+        if not self.watching:
+            self.client.loop.create_task(self.watch_for_start())
 
     def set_last_date(self):
         today = arrow.utcnow()
@@ -258,7 +261,7 @@ class Bot:
 
     def run(self):
         self.client.run(Bot.SECRET)
-        self.client.loop.create_task(self.watch_for_start())
+        self.client.on
 
 
 if __name__ == '__main__':
