@@ -3,10 +3,10 @@ services:
   discordbot:
     build: .
     restart: always
-    image: xrisk/aocbot:stable
+    build: .
     depends_on:
         - mongodb
-    restart_policy:
-      condition: any
+    restart: unless-stopped
   mongodb:
     image: mongo
+    restart: unless-stopped
