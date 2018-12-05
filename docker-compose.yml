@@ -6,7 +6,7 @@ services:
     image: xrisk/aocbot:stable
     depends_on:
         - mongodb
+    restart_policy:
+      condition: any
   mongodb:
     image: mongo
-
-

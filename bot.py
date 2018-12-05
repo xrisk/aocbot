@@ -15,19 +15,19 @@ class Bot:
     SECRET = config.SECRET
     CHAN_ID = config.CHAN_ID
     LEADERBOARD_ID = config.LEADERBOARD_ID
-    REQ_URL = "http://adventofcode.com/2017/leaderboard/private/view/{}.json"
+    REQ_URL = "http://adventofcode.com/2018/leaderboard/private/view/{}.json"
     PREFIX = config.PREFIX
 
     def __init__(self):
         self.client = discord.Client()
         self.client.event(self.on_ready)
         self.client.event(self.on_message)
-        self.db = pymongo.MongoClient('mongodb').aoc
+        self.db = pymongo.MongoClient("mongodb").aoc
         self.last_date = None
         self.watching = False
 
     async def on_ready(self):
-        logging.info('Logged in as {}'.format(self.client.user.name))
+        logging.info("Logged in as {}".format(self.client.user.name))
 
         game = discord.Game(game="https://github.com/xrisk/aocbot")
         await self.client.change_presence(game=game)
@@ -56,8 +56,9 @@ class Bot:
 
             today = arrow.utcnow()
 
-            next_start = arrow.Arrow(today.year, today.month,
-                                     self.last_date + 1,  hour=5)
+            next_start = arrow.Arrow(
+                today.year, today.month, self.last_date + 1, hour=5
+            )
 
             logging.info("next start time computed as {}".format(next_start))
 
@@ -73,8 +74,7 @@ class Bot:
                     break
                 else:
                     time_del = (next_start - cur_date).seconds
-                    logging.info("time till next day start is {}".
-                                 format(time_del))
+                    logging.info("time till next day start is {}".format(time_del))
                     logging.info("sleeping till next day start")
                     if time_del <= 10:
                         logging.info("sleeping for 1s")
@@ -98,7 +98,7 @@ class Bot:
         logging.info("watching leaderboard for day {}".format(day))
         message = None
         while True:
-            url = 'http://adventofcode.com/2017/leaderboard/day/{}'
+            url = "http://adventofcode.com/2018/leaderboard/day/{}"
             r = requests.get(url.format(day))
 
             if r.status_code == 404:
@@ -109,11 +109,11 @@ class Bot:
                 continue
 
             soup = bs4.BeautifulSoup(r.text, "lxml")
-            p = soup.find_all('p')
+            p = soup.find_all("p")
             if len(p) < 3:
                 logging.info("seems like the leaderboard is empty")
                 logging.info("sleeping 10s")
-                await aysncio.sleep(10)
+                await asyncio.sleep(10)
                 continue
             cnt = 0
             for tag in p[2].next_siblings:
@@ -123,8 +123,7 @@ class Bot:
                     cnt += 1
 
             if cnt >= 100:
-                msg = "Top 100 for Day {} filled. " \
-                      "Stopping live updates."
+                msg = "Top 100 for Day {} filled. " "Stopping live updates."
                 await self.client.send_message(self.channel, msg.format(day))
                 break
             else:
@@ -137,13 +136,16 @@ class Bot:
 
     async def fetch_leaderboard(self, onetime=False):
         while not self.client.is_closed:
-            r = requests.get(Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
-                             cookies={'session': Bot.SESS_KEY})
+            r = requests.get(
+                Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
+                cookies={"session": Bot.SESS_KEY},
+            )
 
             if r.status_code != requests.codes.ok:
                 err = "API fetch failed - bad status code in HTTP response {}"
                 err = err.format(r.status_code)
                 logging.critical(err)
+                logging.info(r.text)
                 self.client.send_message(self.channel, err)
             else:
                 try:
@@ -168,22 +170,24 @@ class Bot:
             lines = []
             for m in json["members"]:
                 new = json["members"][m]
-                old = self.db.memberlist.find_one({'id': new["id"]})
+                old = self.db.memberlist.find_one({"id": new["id"]})
 
                 if not old:
                     greet = "{} just joined. Welcome!".format(new["name"])
                     joins.append(greet)
                     self.db.memberlist.insert_one(new)
-                    logging.info("adding ({}, {}) to store".format(
-                                 new["id"], new["name"]))
+                    logging.info(
+                        "adding ({}, {}) to store".format(new["id"], new["name"])
+                    )
                 else:
                     db_ts = arrow.get(old["last_star_ts"])
                     cur_ts = arrow.get(new["last_star_ts"])
 
                     if cur_ts > db_ts:
                         finished, started = [], []
-                        logging.info("updating store for ({}, {})".format(
-                                     new["id"], new["name"]))
+                        logging.info(
+                            "updating store for ({}, {})".format(new["id"], new["name"])
+                        )
                         self.db.memberlist.replace_one({"_id": old["_id"]}, new)
                         for day in new["completion_day_level"]:
                             old_cnt = len(old["completion_day_level"].get(day, {}))
@@ -204,14 +208,17 @@ class Bot:
                         if started:
                             if len(finished) == 0:
                                 s = "{} just started on **Day {}**".format(
-                                    new["name"], Bot.pretty_join(started))
+                                    new["name"], Bot.pretty_join(started)
+                                )
                             else:
                                 s += " and started on **Day {}**".format(
-                                     Bot.pretty_join(started))
+                                    Bot.pretty_join(started)
+                                )
 
                         if len(finished) + len(started) >= 2:
-                            s += ". {}!".format(random.choice(
-                                 ["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]))
+                            s += ". {}!".format(
+                                random.choice(["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"])
+                            )
                         else:
                             s += "."
 
@@ -223,7 +230,7 @@ class Bot:
                 await self.client.send_message(self.channel, "\n".join(lines))
 
             logging.info("Done updating store")
-        except KeyError as e:
+        except KeyError:
             logging.warn("Malformed update_store attempt")
             logging.debug("Malformed JSON: {}".format(new))
 
@@ -234,9 +241,11 @@ class Bot:
         ret.sort(key=lambda x: x[1], reverse=True)
         lines = []
         for i, j in enumerate(ret):
-            lines.append("{}. {} ({} points)".format(i + 1, j[0], j[1]))
+            if int(j[1]) != 0:
+                lines.append("{}. {} ({} points)".format(i + 1, j[0], j[1]))
         return "\n".join(lines)
 
+    @staticmethod
     def pretty_join(list):
         if len(list) <= 1:
             return "".join(list)
@@ -245,26 +254,27 @@ class Bot:
     async def on_message(self, message):
         if len(message.content) > 0 and message.content[0] == Bot.PREFIX:
             content = message.content[1:]
-            if content.startswith('leaderboard'):
-                await self.client.send_message(message.channel,
-                                               self.generate_leaderboard())
-            elif content.startswith('ping'):
+            if content.startswith("leaderboard"):
+                await self.client.send_message(
+                    message.channel, self.generate_leaderboard()
+                )
+            elif content.startswith("ping"):
                 await self.client.send_message(message.channel, "Pong!")
-            elif content.startswith('store'):
-                await self.client.send_message(message.channel,
-                                               self.db.memberlist.find())
-            elif content.startswith('refresh'):
+            elif content.startswith("store"):
+                await self.client.send_message(
+                    message.channel, self.db.memberlist.find()
+                )
+            elif content.startswith("refresh"):
                 logging.info("attempting to manually refresh")
                 await self.fetch_leaderboard(onetime=True)
-            elif content.startswith('timetill'):
+            elif content.startswith("timetill"):
                 await self.client.send_message(message.channel, self.time_till())
 
     def run(self):
         self.client.run(Bot.SECRET)
-        self.client.on
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     b = Bot()
     b.run()
