@@ -15,7 +15,7 @@ class Bot:
     SECRET = config.SECRET
     CHAN_ID = config.CHAN_ID
     LEADERBOARD_ID = config.LEADERBOARD_ID
-    REQ_URL = "http://adventofcode.com/2018/leaderboard/private/view/{}.json"
+    REQ_URL = "http://adventofcode.com/2019/leaderboard/private/view/{}.json"
     PREFIX = config.PREFIX
 
     def __init__(self):
@@ -29,10 +29,11 @@ class Bot:
     async def on_ready(self):
         logging.info("Logged in as {}".format(self.client.user.name))
 
-        game = discord.Game(game="https://github.com/xrisk/aocbot")
-        await self.client.change_presence(game=game)
+        game = discord.Game(name="https://github.com/xrisk/aocbot")
+        await self.client.change_presence(activity=game)
 
         self.channel = self.client.get_channel(Bot.CHAN_ID)
+        logging.info(self.channel)
         self.set_last_date()
         self.client.loop.create_task(self.fetch_leaderboard())
         if not self.watching:
@@ -66,15 +67,19 @@ class Bot:
                 cur_date = arrow.utcnow()
                 if cur_date >= next_start:
                     msg = "Day {} has started!".format(next_start.day)
-                    await self.client.send_message(self.channel, msg)
+                    await self.channel.send(msg)
                     logging.info("day {} has started!".format(next_start.day))
-                    logging.info("setting last_date to {}".format(next_start.day))
+                    logging.info(
+                        "setting last_date to {}".format(next_start.day)
+                    )
                     self.last_date = next_start.day
                     await self.watch_leaderboard(self.last_date)
                     break
                 else:
                     time_del = (next_start - cur_date).seconds
-                    logging.info("time till next day start is {}".format(time_del))
+                    logging.info(
+                        "time till next day start is {}".format(time_del)
+                    )
                     logging.info("sleeping till next day start")
                     if time_del <= 10:
                         logging.info("sleeping for 1s")
@@ -92,13 +97,15 @@ class Bot:
         hour = diff // 3600
         m = (diff % 3600) // 60
         sec = diff % 60
-        return "{} => {:02d}:{:02d}:{:02d}".format(nxt.humanize(), hour, m, sec)
+        return "{} => {:02d}:{:02d}:{:02d}".format(
+            nxt.humanize(), hour, m, sec
+        )
 
     async def watch_leaderboard(self, day):
         logging.info("watching leaderboard for day {}".format(day))
         message = None
         while True:
-            url = "http://adventofcode.com/2018/leaderboard/day/{}"
+            url = "http://adventofcode.com/2019/leaderboard/day/{}"
             r = requests.get(url.format(day))
 
             if r.status_code == 404:
@@ -124,18 +131,18 @@ class Bot:
 
             if cnt >= 100:
                 msg = "Top 100 for Day {} filled. " "Stopping live updates."
-                await self.client.send_message(self.channel, msg.format(day))
+                await self.channel.send(msg.format(day))
                 break
             else:
                 s = "Day {}: {} users finished.".format(day, cnt)
                 if not message:
-                    message = await self.client.send_message(self.channel, s)
+                    message = await self.channel.send(s)
                 else:
-                    await self.client.edit_message(message, s)
+                    await message.edit(content=s)
                 await asyncio.sleep(10)
 
     async def fetch_leaderboard(self, onetime=False):
-        while not self.client.is_closed:
+        while True:
             r = requests.get(
                 Bot.REQ_URL.format(Bot.LEADERBOARD_ID),
                 cookies={"session": Bot.SESS_KEY},
@@ -146,7 +153,7 @@ class Bot:
                 err = err.format(r.status_code)
                 logging.critical(err)
                 logging.info(r.text)
-                self.client.send_message(self.channel, err)
+                self.channel.send(err)
             else:
                 try:
                     resp_as_json = r.json()
@@ -154,7 +161,7 @@ class Bot:
                 except ValueError:
                     err = "API fetch failed - Invalid JSON response"
                     logging.critical(err)
-                    self.client.send_message(self.channel, err)
+                    self.channel.send(err)
 
                 await self.update_store(resp_as_json)
 
@@ -177,20 +184,28 @@ class Bot:
                     joins.append(greet)
                     self.db.memberlist.insert_one(new)
                     logging.info(
-                        "adding ({}, {}) to store".format(new["id"], new["name"])
+                        "adding ({}, {}) to store".format(
+                            new["id"], new["name"]
+                        )
                     )
                 else:
-                    db_ts = arrow.get(old["last_star_ts"])
-                    cur_ts = arrow.get(new["last_star_ts"])
+                    db_ts = arrow.get(int(old["last_star_ts"]))
+                    cur_ts = arrow.get(int(new["last_star_ts"]))
 
                     if cur_ts > db_ts:
                         finished, started = [], []
                         logging.info(
-                            "updating store for ({}, {})".format(new["id"], new["name"])
+                            "updating store for ({}, {})".format(
+                                new["id"], new["name"]
+                            )
                         )
-                        self.db.memberlist.replace_one({"_id": old["_id"]}, new)
+                        self.db.memberlist.replace_one(
+                            {"_id": old["_id"]}, new
+                        )
                         for day in new["completion_day_level"]:
-                            old_cnt = len(old["completion_day_level"].get(day, {}))
+                            old_cnt = len(
+                                old["completion_day_level"].get(day, {})
+                            )
                             new_cnt = len(new["completion_day_level"][day])
 
                             if new_cnt > old_cnt:
@@ -217,7 +232,9 @@ class Bot:
 
                         if len(finished) + len(started) >= 2:
                             s += ". {}!".format(
-                                random.choice(["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"])
+                                random.choice(
+                                    ["Nice", "Wew", "Whoa", "( ͡° ͜ʖ ͡°)"]
+                                )
                             )
                         else:
                             s += "."
@@ -225,9 +242,9 @@ class Bot:
                         lines.append(s)
 
             if joins:
-                await self.client.send_message(self.channel, "\n".join(joins))
+                await self.channel.send("\n".join(joins))
             if lines:
-                await self.client.send_message(self.channel, "\n".join(lines))
+                await self.channel.send("\n".join(lines))
 
             logging.info("Done updating store")
         except KeyError:
@@ -243,7 +260,9 @@ class Bot:
         for i, j in enumerate(ret):
             if int(j[1]) != 0:
                 lines.append("{}. {} ({} points)".format(i + 1, j[0], j[1]))
-        return "\n".join(lines)
+        msg = "\n".join(lines)
+        logging.info(msg)
+        return msg
 
     @staticmethod
     def pretty_join(list):
@@ -252,23 +271,20 @@ class Bot:
         return "{} and {}".format(", ".join(list[:-1]), list[-1])
 
     async def on_message(self, message):
+        chan = message.channel
         if len(message.content) > 0 and message.content[0] == Bot.PREFIX:
             content = message.content[1:]
             if content.startswith("leaderboard"):
-                await self.client.send_message(
-                    message.channel, self.generate_leaderboard()
-                )
+                await chan.send(self.generate_leaderboard())
             elif content.startswith("ping"):
-                await self.client.send_message(message.channel, "Pong!")
+                await chan.send("Pong!")
             elif content.startswith("store"):
-                await self.client.send_message(
-                    message.channel, self.db.memberlist.find()
-                )
+                await chan.send(self.db.memberlist.find())
             elif content.startswith("refresh"):
                 logging.info("attempting to manually refresh")
                 await self.fetch_leaderboard(onetime=True)
             elif content.startswith("timetill"):
-                await self.client.send_message(message.channel, self.time_till())
+                await chan.send(self.time_till())
 
     def run(self):
         self.client.run(Bot.SECRET)
