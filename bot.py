@@ -37,6 +37,7 @@ class Bot:
         self.set_last_date()
         self.client.loop.create_task(self.fetch_leaderboard())
         if not self.watching:
+            self.watching = True
             self.client.loop.create_task(self.watch_for_start())
 
     def set_last_date(self):
