@@ -51,9 +51,12 @@ class Bot:
         logging.info("now watching for day start events")
 
         while True:
-
             if self.last_date == 25:
                 # AOC is over, stop watching
+                await self.channel.send("AOC is over! Merry Christmas!")
+                await self.channel.send(
+                    "Please consider starring my repo: https://github.com/xrisk/aocbot"
+                )
                 break
 
             today = arrow.utcnow()
