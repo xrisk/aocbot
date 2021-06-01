@@ -16,7 +16,7 @@ requests==2.22.0
 six==1.13.0
 soupsieve==1.9.5
 typing-extensions==3.7.4.1
-urllib3==1.25.7
+urllib3==1.26.5
 websockets==6.0
 yarl==1.4.2
 lxml
